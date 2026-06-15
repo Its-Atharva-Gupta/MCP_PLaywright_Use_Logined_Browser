@@ -1,12 +1,12 @@
 # playwright-persistent-mcp
 
-`playwright-persistent-mcp` is a standard MCP server that drives a persistent Chromium profile with Playwright. It is designed for Raspberry Pi OS / Debian ARM64 setups where you want to log into websites once and let AI agents reuse the same cookies, local storage, IndexedDB, and authenticated sessions later in headless mode.
+`playwright-persistent-mcp` is a standard MCP server that drives a persistent Chromium profile with Playwright. It is designed for Raspberry Pi OS / Debian ARM64 setups where you want to reuse existing Chromium cookies, local storage, IndexedDB, and authenticated sessions later in headless mode.
 
-The server always uses:
+By default, the server now uses your existing Chromium user data directory:
 
-`~/.playwright-agent-profile`
+`~/.config/chromium`
 
-unless you override it with `PLAYWRIGHT_AGENT_PROFILE_DIR`.
+You can override that with `PLAYWRIGHT_AGENT_PROFILE_DIR`.
 
 ## What It Provides
 
@@ -25,14 +25,19 @@ The MCP server exposes these tools:
 
 ## Why This Works For Persistent Login
 
-The implementation uses Playwright's `chromium.launchPersistentContext()` with a fixed profile directory. That means Chromium reuses the same on-disk browser profile every time:
+The implementation uses Playwright's `chromium.launchPersistentContext()` with a fixed Chromium user data directory. That means Playwright reuses the same on-disk browser profile every time:
 
 - cookies stay on disk
 - local storage stays on disk
 - IndexedDB stays on disk
 - existing sessions stay on disk
 
-No temporary profile is created, and the profile is never deleted by the server.
+No temporary profile is created, and the configured user data directory is never deleted by the server.
+
+Important:
+
+- close normal Chromium before starting Playwright against the same user data directory
+- do not run regular Chromium and this MCP server against the same profile at the same time
 
 ## Installation
 
@@ -51,7 +56,9 @@ sudo apt install -y chromium
 npm install
 ```
 
-4. Start the server through `npx`.
+4. Make sure regular Chromium is fully closed if you want to reuse your existing browser cookies.
+
+5. Start the server through `npx`.
 
 ```bash
 npx playwright-persistent-mcp serve
@@ -76,13 +83,30 @@ The runtime also passes a few Chromium flags that are typically helpful on Pi an
 - `--no-default-browser-check`
 - `--password-store=basic`
 
+For login compatibility, the launcher also suppresses Playwright's default `--enable-automation` flag. Some sites, especially Google sign-in, are more likely to reject a browser session when that flag is present.
+
 If your environment needs sandboxing disabled, set:
 
 ```bash
 export PLAYWRIGHT_AGENT_NO_SANDBOX=1
 ```
 
-## First Run: Manual Login
+## Using Your Existing Chromium Cookies
+
+If your existing cookies already live in the default Raspberry Pi Chromium profile, you usually do not need a separate login step at all. Just make sure Chromium is closed, then run:
+
+```bash
+npx playwright-persistent-mcp serve
+```
+
+If your cookies are in a different Chromium user data directory, point the server at it:
+
+```bash
+export PLAYWRIGHT_AGENT_PROFILE_DIR="/path/to/chromium-user-data-dir"
+npx playwright-persistent-mcp serve
+```
+
+## Manual Login
 
 Run:
 
@@ -93,12 +117,12 @@ npx playwright-persistent-mcp login
 This will:
 
 1. launch Chromium in headed mode
-2. reuse `~/.playwright-agent-profile`
+2. reuse `~/.config/chromium` by default
 3. let you manually log into sites
 4. persist all browser state to disk
 5. finish when you close the browser
 
-After that, the profile can be reused headlessly.
+After that, the same Chromium user data directory can be reused headlessly.
 
 ## Runtime Mode
 
@@ -111,7 +135,7 @@ npx playwright-persistent-mcp serve
 This will:
 
 1. launch headless Chromium
-2. reuse `~/.playwright-agent-profile`
+2. reuse `~/.config/chromium` by default
 3. start the MCP server on stdio
 4. expose browser tools to your MCP client
 
@@ -161,7 +185,7 @@ If you are running from the cloned project before publishing to npm:
 
 ## Environment Variables
 
-- `PLAYWRIGHT_AGENT_PROFILE_DIR`: override the persistent profile path
+- `PLAYWRIGHT_AGENT_PROFILE_DIR`: override the Chromium user data directory
 - `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`: force a specific Chromium binary
 - `PLAYWRIGHT_AGENT_NO_SANDBOX=1`: add `--no-sandbox` and `--disable-setuid-sandbox`
 
@@ -175,6 +199,7 @@ npm run build
 
 ## Operational Tips
 
-- Run `login` once after a reboot only if a site logged you out.
-- Keep the profile directory backed up if the sessions are important.
+- Close normal Chromium before running `serve` if both point at the same profile.
+- Run `login` only if you need to refresh a site session.
+- Keep the Chromium user data directory backed up if the sessions are important.
 - Use a system service like `systemd` if you want `serve` to start automatically on boot.

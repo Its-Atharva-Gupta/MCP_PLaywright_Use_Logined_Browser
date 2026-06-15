@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-export const PROFILE_DIR = path.join(os.homedir(), ".playwright-agent-profile");
+export const DEFAULT_PROFILE_DIR = path.join(os.homedir(), ".config", "chromium");
 
 const DEFAULT_CHROMIUM_CANDIDATES = [
   "/usr/bin/chromium",
@@ -15,6 +15,7 @@ export interface BrowserLaunchConfig {
   headless: boolean;
   profileDir: string;
   browserArgs: string[];
+  ignoreDefaultArgs?: string[];
 }
 
 export function resolveBrowserLaunchConfig(headless: boolean): BrowserLaunchConfig {
@@ -25,8 +26,9 @@ export function resolveBrowserLaunchConfig(headless: boolean): BrowserLaunchConf
   return {
     executablePath,
     headless,
-    profileDir: process.env.PLAYWRIGHT_AGENT_PROFILE_DIR ?? PROFILE_DIR,
-    browserArgs: buildChromiumArgs()
+    profileDir: process.env.PLAYWRIGHT_AGENT_PROFILE_DIR ?? DEFAULT_PROFILE_DIR,
+    browserArgs: buildChromiumArgs(),
+    ignoreDefaultArgs: buildIgnoredDefaultArgs()
   };
 }
 
@@ -45,4 +47,8 @@ function buildChromiumArgs(): string[] {
   }
 
   return args;
+}
+
+function buildIgnoredDefaultArgs(): string[] {
+  return ["--enable-automation"];
 }

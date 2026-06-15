@@ -27,6 +27,7 @@ export class PersistentBrowserManager {
       executablePath: this.launchConfig.executablePath,
       headless: this.launchConfig.headless,
       args: this.launchConfig.browserArgs,
+      ignoreDefaultArgs: this.launchConfig.ignoreDefaultArgs,
       viewport: null
     });
 

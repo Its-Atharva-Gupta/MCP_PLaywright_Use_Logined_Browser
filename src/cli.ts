@@ -12,7 +12,7 @@ function printUsage(): void {
       "  playwright-persistent-mcp serve",
       "",
       "Commands:",
-      "  login  Launch Chromium with the persistent profile for manual sign-in.",
+      "  login  Launch Chromium with the configured Chromium user data directory.",
       "  serve  Launch headless Chromium and start the MCP server on stdio."
     ].join("\n")
   );
@@ -24,7 +24,7 @@ async function runLogin(): Promise<void> {
 
   console.error(`Persistent profile: ${browser.getProfileDir()}`);
   console.error(`Chromium executable: ${browser.getExecutablePath() ?? "Playwright default"}`);
-  console.error("Chromium is open with your persistent profile.");
+  console.error("Chromium is open with your configured Chromium user data directory.");
   console.error("Log into any sites you want the agent to reuse, then close the browser window.");
 
   await browser.waitUntilClosed();
