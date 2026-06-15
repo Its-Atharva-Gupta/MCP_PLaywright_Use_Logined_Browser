@@ -1,0 +1,39 @@
+{
+  "name": "playwright-persistent-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for controlling a persistent Chromium profile with Playwright.",
+  "type": "module",
+  "bin": {
+    "playwright-persistent-mcp": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare": "npm run build",
+    "start": "node dist/cli.js serve",
+    "login": "node dist/cli.js login"
+  },
+  "keywords": [
+    "mcp",
+    "playwright",
+    "chromium",
+    "raspberry-pi",
+    "automation"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "playwright": "^1.54.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.10",
+    "typescript": "^5.8.3"
+  }
+}
